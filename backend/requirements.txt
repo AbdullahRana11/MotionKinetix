@@ -1,29 +1,10 @@
-# Asynchronous ASGI core framework
-fastapi==0.111.0
-
-# High-performance ASGI server production runtime
+fastapi
 uvicorn[standard]==0.30.1
-
-# Strict data parsing and validation
-pydantic==2.7.4
-
-# Fail-fast environment variable manager
-pydantic-settings==2.3.3
-
-# YOLOv8 deep learning execution environment
+pydantic
+pydantic-settings
 ultralytics==8.2.32
-
-# Server-optimized computer vision engine
 opencv-python-headless==4.9.0.80
-
-# Vectorized linear algebra computations
-numpy==1.26.4
-
-# Signal processing and biomechanical kinematics filtering
-scipy==1.13.1
-
-# Low-latency client-server state streaming
+numpy
+scipy
 websockets==12.0
-
-# Streaming form data and video multipart binary parser
 python-multipart==0.0.9
