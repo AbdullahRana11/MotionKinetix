@@ -34,8 +34,8 @@ class PoseExtractionService:
             self.model = YOLO('yolov8n-pose.pt')
             logger.info("Successfully loaded YOLOv8n-pose model.")
         except Exception as e:
-            logger.error(f"Failed to load YOLO model: {e}", exc_info=True)
-            raise
+            logger.critical(f"Critical failure loading YOLOv8 pose model weights: {e}", exc_info=True)
+            raise RuntimeError("Failed to load YOLOv8 pose model weights.") from e
 
     async def extract_frames(self, video_path: str) -> AsyncGenerator[SkeletonFrame, None]:
         """
