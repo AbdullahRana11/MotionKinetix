@@ -39,8 +39,8 @@ class PoseExtractionService:
 
     async def extract_frames(self, video_path: str) -> AsyncGenerator[SkeletonFrame, None]:
         """
-        Asynchronously reads a video frame by frame, processes it with YOLOv8, 
-        and yields strongly-typed SkeletonFrame schemas.
+        Asynchronously reads a video frame by frame, calculates FPS,
+        and yields a dummy SkeletonFrame object for every frame.
         """
         cap = cv2.VideoCapture(video_path)
         
@@ -49,7 +49,6 @@ class PoseExtractionService:
             raise ValueError(f"Could not open video {video_path}")
 
         fps = cap.get(cv2.CAP_PROP_FPS)
-        # Fallback to ~30fps if the metadata is missing
         frame_interval_ms = 1000.0 / fps if fps > 0 else 33.33
 
         try:
@@ -57,52 +56,19 @@ class PoseExtractionService:
             while True:
                 ret, frame = cap.read()
                 if not ret:
-                    # End of video stream
                     break
-
-                # Run inference on the current frame
-                # verbose=False prevents YOLO from spamming stdout on every frame
-                results = self.model(frame, verbose=False)
-                
-                keypoints_list = []
-                
-                # Extract keypoints if a person was detected
-                if results and len(results) > 0 and results[0].keypoints is not None:
-                    kpts_tensor = results[0].keypoints.data
-                    
-                    if len(kpts_tensor) > 0:
-                        # Grab the first detected person's keypoints
-                        person_kpts = kpts_tensor[0]
-                        
-                        for i, kp in enumerate(person_kpts):
-                            if i < len(KEYPOINT_LABELS):
-                                x, y, conf = kp.tolist()
-                                keypoints_list.append(
-                                    Keypoint(
-                                        x=float(x),
-                                        y=float(y),
-                                        confidence=float(conf),
-                                        label=KEYPOINT_LABELS[i]
-                                    )
-                                )
 
                 timestamp_ms = frame_index * frame_interval_ms
                 
-                # Construct the validated Pydantic model
-                skeleton_frame = SkeletonFrame(
+                yield SkeletonFrame(
                     frame_index=frame_index,
                     timestamp_ms=float(timestamp_ms),
-                    keypoints=keypoints_list
+                    keypoints=[]
                 )
                 
-                yield skeleton_frame
-                
                 frame_index += 1
-                
-                # Yield control to the asyncio event loop so we don't block the server
                 await asyncio.sleep(0)
 
         finally:
-            # Guarantee memory release even if an exception or corruption breaks the loop
             cap.release()
             logger.debug(f"Released VideoCapture resource for {video_path}")
