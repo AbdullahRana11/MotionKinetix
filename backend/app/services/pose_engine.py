@@ -58,12 +58,31 @@ class PoseExtractionService:
                 if not ret:
                     break
 
+                results = self.model(frame, verbose=False)
+                keypoints_list = []
+
+                if results and len(results) > 0 and results[0].keypoints is not None:
+                    kpts_tensor = results[0].keypoints.data
+                    if len(kpts_tensor) > 0:
+                        person_kpts = kpts_tensor[0]
+                        for i, kp in enumerate(person_kpts):
+                            if i < len(KEYPOINT_LABELS):
+                                x, y, conf = kp.tolist()
+                                keypoints_list.append(
+                                    Keypoint(
+                                        x=float(x),
+                                        y=float(y),
+                                        confidence=float(conf),
+                                        label=KEYPOINT_LABELS[i]
+                                    )
+                                )
+
                 timestamp_ms = frame_index * frame_interval_ms
                 
                 yield SkeletonFrame(
                     frame_index=frame_index,
                     timestamp_ms=float(timestamp_ms),
-                    keypoints=[]
+                    keypoints=keypoints_list
                 )
                 
                 frame_index += 1
