@@ -15,6 +15,7 @@ torch.load = _patched_torch_load
 from ultralytics import YOLO
 
 from app.schemas.kinematics import SkeletonFrame, Keypoint
+from app.services.physics_engine import KinematicEngine
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class PoseExtractionService:
         try:
             logger.info("Initializing PoseExtractionService, loading YOLOv8 pose model...")
             self.model = YOLO('yolov8n-pose.pt')
+            self.kinematics = KinematicEngine()
             logger.info("Successfully loaded YOLOv8n-pose model.")
         except Exception as e:
             logger.critical(f"Critical failure loading YOLOv8 pose model weights: {e}", exc_info=True)
@@ -78,13 +80,18 @@ class PoseExtractionService:
                                 )
 
                 timestamp_ms = frame_index * frame_interval_ms
-                
-                yield SkeletonFrame(
+
+                skeleton_frame = SkeletonFrame(
                     frame_index=frame_index,
                     timestamp_ms=float(timestamp_ms),
                     keypoints=keypoints_list
                 )
-                
+
+                telemetry = self.kinematics.process_frame_kinematics(skeleton_frame)
+                skeleton_frame.telemetry = telemetry
+
+                yield skeleton_frame
+
                 frame_index += 1
                 await asyncio.sleep(0)
 
