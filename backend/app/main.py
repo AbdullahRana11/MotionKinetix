@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.api.router import router as api_router
+from app.api.websocket_handler import ws_router
 
 # Initialise logging before anything else
 setup_logging()
@@ -17,7 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+app.include_router(api_router, prefix=settings.API_V1_STR, tags=["video-processing"])
+app.include_router(ws_router, tags=["real-time-streams"])
 @app.get("/")
 async def root():
     return {"service": settings.PROJECT_NAME, "status": "online"}
