@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DEBUG_MODE: bool = True
     STORAGE_BASE_DIR: str = "storage"
+    DATABASE_URL: str = "sqlite:///./storage/motionkinetix.db"
 
     # Configure Pydantic to read from environment variables or a .env file
     model_config = SettingsConfigDict(
