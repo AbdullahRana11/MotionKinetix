@@ -2,9 +2,12 @@ import uuid
 import shutil
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import get_db
+from app.crud.video import create_video_record
 
 router = APIRouter()
 
@@ -12,7 +15,7 @@ ALLOWED_EXTENSIONS = {".mp4", ".mov", ".avi"}
 
 
 @router.post("/upload-video/")
-async def upload_video(file: UploadFile = File(...)):
+async def upload_video(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
     Production file upload endpoint.
     Validates the file type, generates a secure UUID for storage, 
@@ -44,5 +47,8 @@ async def upload_video(file: UploadFile = File(...)):
         # Always close the uploaded file
         file.file.close()
 
-    # 4. Return JSON response containing the new video_id
-    return {"video_id": video_id, "status": "success"}
+    # 4. Create database record
+    db_video = create_video_record(db, video_id=video_id, filename=file.filename)
+
+    # 5. Return JSON response containing the new video_id and db status
+    return {"video_id": video_id, "status": "success", "db_status": db_video.status}
