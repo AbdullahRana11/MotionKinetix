@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.crud.video import create_video_record, get_video
+from app.crud.telemetry import get_angular_velocity_series
 from app.services.worker import process_video_background
+from app.services.dtw_engine import calculate_kinematic_deviation
 
 router = APIRouter()
 
@@ -82,3 +84,22 @@ async def get_video_status(video_id: str, db: Session = Depends(get_db)):
         "status": db_video.status,
         "created_at": db_video.created_at
     }
+
+
+@router.get("/compare/{user_video_id}/{pro_video_id}")
+async def compare_videos(user_video_id: str, pro_video_id: str, db: Session = Depends(get_db)):
+    """
+    Compare a user's attempt against a golden standard using FastDTW.
+    """
+    user_series = get_angular_velocity_series(db, user_video_id)
+    pro_series = get_angular_velocity_series(db, pro_video_id)
+
+    if not user_series:
+        raise HTTPException(status_code=404, detail=f"No telemetry found for user video {user_video_id}")
+    if not pro_series:
+        raise HTTPException(status_code=404, detail=f"No telemetry found for pro video {pro_video_id}")
+
+    # Calculate kinematic deviation
+    result = calculate_kinematic_deviation(pro_series, user_series)
+
+    return result
