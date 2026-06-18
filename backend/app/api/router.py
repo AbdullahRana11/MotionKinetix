@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.crud.video import create_video_record
+from app.crud.video import create_video_record, get_video
 from app.services.worker import process_video_background
 
 router = APIRouter()
@@ -64,4 +64,21 @@ async def upload_video(
         "status": "processing_started", 
         "db_status": db_video.status,
         "message": "Video has been queued for background processing."
+    }
+
+
+@router.get("/videos/{video_id}/status")
+async def get_video_status(video_id: str, db: Session = Depends(get_db)):
+    """
+    Query the processing status of a specific video by its UUID.
+    """
+    db_video = get_video(db, video_id)
+    if not db_video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    return {
+        "video_id": db_video.id,
+        "filename": db_video.filename,
+        "status": db_video.status,
+        "created_at": db_video.created_at
     }
