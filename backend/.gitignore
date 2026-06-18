@@ -1,0 +1,22 @@
+# Python & Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# AI Weights
+*.pt
+yolov8n-pose.pt
+
+# Storage & Databases
+storage/
+*.sqlite3
+*.db
+motionkinetix.db
+
+# Testing scripts
+test_*.py
+*.mp4
+*.mov
