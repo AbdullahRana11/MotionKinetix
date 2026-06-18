@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api.router import router as api_router
 from app.api.websocket_handler import ws_router
+from app.api.auth import router as auth_router
 
 # Initialise logging before anything else
 setup_logging()
@@ -20,6 +21,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR, tags=["video-processing"])
+app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
 app.include_router(ws_router, tags=["real-time-streams"])
 @app.get("/")
 async def root():
