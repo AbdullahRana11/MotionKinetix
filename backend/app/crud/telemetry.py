@@ -30,3 +30,20 @@ def bulk_insert_telemetry(db: Session, video_id: str, frames_data: list[Skeleton
     if mappings_list:
         db.bulk_insert_mappings(Telemetry, mappings_list)
         db.commit()
+
+
+def get_angular_velocity_series(db: Session, video_id: str) -> list[float]:
+    """
+    Retrieve the ordered angular velocity time series for a specific video.
+    Returns a flat list of floats representing the sequence over time.
+    """
+    results = (
+        db.query(Telemetry.angular_velocity)
+        .filter(Telemetry.video_id == video_id)
+        .order_by(Telemetry.frame_index.asc())
+        .all()
+    )
+    
+    # results is a list of tuples like: [(0.0,), (145.2,), (142.1,), ...]
+    # Flatten it into a list of floats
+    return [row[0] for row in results]
