@@ -2,12 +2,13 @@ import uuid
 import shutil
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.crud.video import create_video_record
+from app.services.worker import process_video_background
 
 router = APIRouter()
 
@@ -15,7 +16,11 @@ ALLOWED_EXTENSIONS = {".mp4", ".mov", ".avi"}
 
 
 @router.post("/upload-video/")
-async def upload_video(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_video(
+    background_tasks: BackgroundTasks, 
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db)
+):
     """
     Production file upload endpoint.
     Validates the file type, generates a secure UUID for storage, 
@@ -50,5 +55,13 @@ async def upload_video(file: UploadFile = File(...), db: Session = Depends(get_d
     # 4. Create database record
     db_video = create_video_record(db, video_id=video_id, filename=file.filename)
 
-    # 5. Return JSON response containing the new video_id and db status
-    return {"video_id": video_id, "status": "success", "db_status": db_video.status}
+    # 5. Add worker to background tasks queue
+    background_tasks.add_task(process_video_background, video_id=video_id, video_path=str(file_path))
+
+    # 6. Return JSON response notifying client that async processing has started
+    return {
+        "video_id": video_id, 
+        "status": "processing_started", 
+        "db_status": db_video.status,
+        "message": "Video has been queued for background processing."
+    }
