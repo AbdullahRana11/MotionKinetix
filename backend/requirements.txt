@@ -10,3 +10,6 @@ websockets==12.0
 python-multipart==0.0.9
 dtw-python
 fastdtw
+PyJWT
+passlib
+bcrypt
