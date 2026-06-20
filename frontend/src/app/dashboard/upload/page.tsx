@@ -38,7 +38,7 @@ export default function UploadVideoPage() {
       formData.append('file', file);
 
       // Using the exact endpoint provided. If backend uses v1 routing, this might need updating to /api/v1/videos/upload
-      const res = await fetch('http://localhost:8000/api/videos/upload', {
+      const res = await fetch('http://localhost:8000/api/v1/videos/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
