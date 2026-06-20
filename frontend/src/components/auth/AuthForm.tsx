@@ -1,18 +1,72 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/useAuthStore';
 
 type AuthMode = 'login' | 'register';
 
 export default function AuthForm() {
+  const router = useRouter();
+  const loginAction = useAuthStore((state) => state.login);
+
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // API logic will go here
-    console.log('Submitting', { mode, email, password });
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      if (mode === 'register') {
+        const res = await fetch('http://localhost:8000/api/v1/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || 'Registration failed');
+        }
+        
+        // Auto-login after register, or prompt to login
+        // For simplicity, we'll just switch to login mode with prefilled email
+        setMode('login');
+        setError('Registration successful. Please log in.');
+      } else {
+        const formData = new URLSearchParams();
+        formData.append('username', email);
+        formData.append('password', password);
+
+        const res = await fetch('http://localhost:8000/api/v1/auth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || 'Login failed');
+        }
+
+        const data = await res.json();
+        if (data.access_token) {
+          loginAction(data.access_token);
+          router.push('/dashboard');
+        } else {
+          throw new Error('No token received');
+        }
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -34,7 +88,10 @@ export default function AuthForm() {
         <div className="mx-auto flex max-w-[240px] items-center justify-between border-b border-white/10 pb-2">
           <button
             type="button"
-            onClick={() => setMode('login')}
+            onClick={() => {
+              setMode('login');
+              setError(null);
+            }}
             className={`flex-1 text-center font-mono text-sm font-bold tracking-wider uppercase transition-colors ${
               mode === 'login' ? 'text-white' : 'text-[#8e90a2] hover:text-[#c4c5d9]'
             }`}
@@ -44,7 +101,10 @@ export default function AuthForm() {
           <div className="h-4 w-px bg-white/10" />
           <button
             type="button"
-            onClick={() => setMode('register')}
+            onClick={() => {
+              setMode('register');
+              setError(null);
+            }}
             className={`flex-1 text-center font-mono text-sm font-bold tracking-wider uppercase transition-colors ${
               mode === 'register' ? 'text-white' : 'text-[#8e90a2] hover:text-[#c4c5d9]'
             }`}
@@ -53,6 +113,12 @@ export default function AuthForm() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className={`mb-6 text-center font-mono text-xs font-semibold ${error.includes('successful') ? 'text-[#00eefc]' : 'text-red-500'}`}>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         {/* Email Field */}
