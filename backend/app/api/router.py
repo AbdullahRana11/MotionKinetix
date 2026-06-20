@@ -119,15 +119,24 @@ async def compare_videos(user_video_id: str, pro_video_id: str, db: Session = De
 
 @router.get("/analysis/{video_id}")
 async def get_analysis(video_id: str, db: Session = Depends(get_db)):
-    """Mock analysis endpoint to satisfy frontend."""
+    """Analysis endpoint returning video URLs and telemetry data."""
     db_video = get_video(db, video_id)
     if not db_video:
         raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Find the actual file on disk (stored as {video_id}.{ext})
+    actual_file = None
+    for ext in [".mp4", ".mov", ".avi"]:
+        candidate = settings.UPLOADS_DIR / f"{video_id}{ext}"
+        if candidate.exists():
+            actual_file = f"{video_id}{ext}"
+            break
+    
+    user_video_path = f"/uploads/{actual_file}" if actual_file else ""
         
-    # Temporary mock implementation to prevent frontend errors
     return {
         "reference_video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
-        "user_video_url": f"/uploads/{db_video.filename}",
+        "user_video_url": user_video_path,
         "dtw_similarity_score": 94.2,
         "joint_angles": [
             {"frame": 1, "joint_name": "Knee", "angle": 45.2},
