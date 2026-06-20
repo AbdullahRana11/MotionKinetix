@@ -26,7 +26,7 @@ export default function DashboardPage() {
       }
 
       try {
-        const res = await fetch('http://localhost:8000/api/videos', {
+        const res = await fetch('http://localhost:8000/api/v1/videos', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
