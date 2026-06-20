@@ -27,3 +27,7 @@ def update_video_status(db: Session, video_id: str, new_status: str) -> Optional
         db.commit()
         db.refresh(db_video)
     return db_video
+
+def get_all_videos(db: Session) -> list[Video]:
+    """Retrieve all video records."""
+    return db.query(Video).order_by(Video.created_at.desc()).all()
