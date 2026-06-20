@@ -119,7 +119,7 @@ async def compare_videos(user_video_id: str, pro_video_id: str, db: Session = De
 
 @router.get("/analysis/{video_id}")
 async def get_analysis(video_id: str, db: Session = Depends(get_db)):
-    """Analysis endpoint returning video URLs and telemetry data."""
+    """Full analysis endpoint returning video URLs, skeleton keypoints, and telemetry."""
     db_video = get_video(db, video_id)
     if not db_video:
         raise HTTPException(status_code=404, detail="Video not found")
@@ -133,14 +133,53 @@ async def get_analysis(video_id: str, db: Session = Depends(get_db)):
             break
     
     user_video_path = f"/uploads/{actual_file}" if actual_file else ""
-        
+
+    # Query all telemetry rows for this video, ordered by frame
+    from app.models.telemetry import Telemetry
+    telemetry_rows = (
+        db.query(Telemetry)
+        .filter(Telemetry.video_id == video_id)
+        .order_by(Telemetry.frame_index.asc())
+        .all()
+    )
+
+    # Build skeleton_frames: list of { frame_index, timestamp_ms, keypoints: [{x,y,confidence,label}] }
+    skeleton_frames = []
+    joint_angles = []
+    for row in telemetry_rows:
+        skeleton_frames.append({
+            "frame_index": row.frame_index,
+            "timestamp_ms": row.timestamp_ms,
+            "keypoints": row.raw_keypoints,  # Already stored as list of dicts
+        })
+        # Also build legacy joint_angles for the table view
+        joint_angles.append({
+            "frame": row.frame_index,
+            "joint_name": "Angular Velocity",
+            "angle": round(row.angular_velocity, 2),
+        })
+
+    # Get video FPS from the actual file
+    video_fps = 30.0  # Default
+    if actual_file:
+        import cv2
+        cap = cv2.VideoCapture(str(settings.UPLOADS_DIR / actual_file))
+        if cap.isOpened():
+            video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+            cap.release()
+
+    # Calculate a DTW score if telemetry exists
+    dtw_score = 0.0
+    if telemetry_rows:
+        velocities = [r.angular_velocity for r in telemetry_rows]
+        avg = sum(velocities) / len(velocities) if velocities else 0
+        dtw_score = round(max(0, 100 - avg * 0.1), 1)  # Simple heuristic
+
     return {
         "reference_video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
         "user_video_url": user_video_path,
-        "dtw_similarity_score": 94.2,
-        "joint_angles": [
-            {"frame": 1, "joint_name": "Knee", "angle": 45.2},
-            {"frame": 2, "joint_name": "Knee", "angle": 48.1},
-            {"frame": 3, "joint_name": "Knee", "angle": 51.5}
-        ]
+        "video_fps": video_fps,
+        "dtw_similarity_score": dtw_score,
+        "skeleton_frames": skeleton_frames,
+        "joint_angles": joint_angles,
     }
