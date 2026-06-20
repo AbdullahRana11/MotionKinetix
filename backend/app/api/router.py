@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.crud.video import create_video_record, get_video
+from app.crud.video import create_video_record, get_video, get_all_videos
 from app.crud.telemetry import get_angular_velocity_series
 from app.services.worker import process_video_background
 from app.services.dtw_engine import calculate_kinematic_deviation
@@ -16,8 +16,21 @@ router = APIRouter()
 
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".avi"}
 
+@router.get("/videos")
+async def get_videos(db: Session = Depends(get_db)):
+    """Get all videos for the dashboard."""
+    videos = get_all_videos(db)
+    return [
+        {
+            "id": v.id,
+            "filename": v.filename,
+            "upload_date": v.created_at.isoformat(),
+            "status": v.status
+        }
+        for v in videos
+    ]
 
-@router.post("/upload-video/")
+@router.post("/videos/upload")
 async def upload_video(
     background_tasks: BackgroundTasks, 
     file: UploadFile = File(...), 
@@ -103,3 +116,22 @@ async def compare_videos(user_video_id: str, pro_video_id: str, db: Session = De
     result = calculate_kinematic_deviation(pro_series, user_series)
 
     return result
+
+@router.get("/analysis/{video_id}")
+async def get_analysis(video_id: str, db: Session = Depends(get_db)):
+    """Mock analysis endpoint to satisfy frontend."""
+    db_video = get_video(db, video_id)
+    if not db_video:
+        raise HTTPException(status_code=404, detail="Video not found")
+        
+    # Temporary mock implementation to prevent frontend errors
+    return {
+        "reference_video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+        "user_video_url": f"/uploads/{db_video.filename}",
+        "dtw_similarity_score": 94.2,
+        "joint_angles": [
+            {"frame": 1, "joint_name": "Knee", "angle": 45.2},
+            {"frame": 2, "joint_name": "Knee", "angle": 48.1},
+            {"frame": 3, "joint_name": "Knee", "angle": 51.5}
+        ]
+    }
