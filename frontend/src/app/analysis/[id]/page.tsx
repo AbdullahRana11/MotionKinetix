@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useParams } from 'next/navigation';
+import SkeletalPlayer from '@/components/analysis/SkeletalPlayer';
 
 export default function AnalysisPage() {
   const params = useParams();
@@ -12,6 +13,13 @@ export default function AnalysisPage() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const getVideoUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    return `http://localhost:8000/${cleanPath}`;
+  };
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -23,7 +31,7 @@ export default function AnalysisPage() {
       if (!id) return;
 
       try {
-        const res = await fetch(`http://localhost:8000/api/analysis/${id}`, {
+        const res = await fetch(`http://localhost:8000/api/v1/analysis/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -46,42 +54,46 @@ export default function AnalysisPage() {
   }, [id, token]);
 
   if (isLoading) {
-    return <div style={{ color: 'white', padding: '2rem' }}>Loading analysis data...</div>;
+    return <div style={{ color: 'white', padding: '2rem', backgroundColor: '#111', minHeight: '100vh' }}>Loading analysis data...</div>;
   }
 
   if (error) {
-    return <div style={{ color: 'red', padding: '2rem' }}>Error: {error}</div>;
+    return <div style={{ color: 'red', padding: '2rem', backgroundColor: '#111', minHeight: '100vh' }}>Error: {error}</div>;
   }
 
   if (!data) {
-    return <div style={{ color: 'white', padding: '2rem' }}>No data found.</div>;
+    return <div style={{ color: 'white', padding: '2rem', backgroundColor: '#111', minHeight: '100vh' }}>No data found.</div>;
   }
 
   return (
     <div style={{ backgroundColor: '#111', color: 'white', minHeight: '100vh', padding: '2rem' }}>
-      <h1>Analysis ID: {id}</h1>
+      <h1 style={{ marginBottom: '0.5rem' }}>Analysis: {id}</h1>
+      <p style={{ color: '#8e90a2', fontSize: '0.875rem', marginBottom: '2rem' }}>
+        {data.skeleton_frames?.length || 0} frames processed &bull; {data.video_fps || 30} FPS
+      </p>
 
       {/* Videos Section */}
-      <div style={{ display: 'flex', gap: '2rem', marginBottom: '3rem', marginTop: '2rem' }}>
+      <div style={{ display: 'flex', gap: '2rem', marginBottom: '3rem' }}>
         <div style={{ flex: 1 }}>
           <h2>Reference (Pro) Video</h2>
           <video 
             controls 
-            style={{ width: '100%', border: '2px solid #555' }}
-            src={data.reference_video_url || ''} 
+            style={{ width: '100%', borderRadius: '8px', border: '1px solid #333', marginTop: '0.5rem' }}
+            src={getVideoUrl(data.reference_video_url)} 
           >
             Your browser does not support the video tag.
           </video>
         </div>
+        
         <div style={{ flex: 1 }}>
-          <h2>User Video</h2>
-          <video 
-            controls 
-            style={{ width: '100%', border: '2px solid #555' }}
-            src={data.user_video_url || ''} 
-          >
-            Your browser does not support the video tag.
-          </video>
+          <h2>User Video — Skeleton Overlay</h2>
+          <div style={{ marginTop: '0.5rem' }}>
+            <SkeletalPlayer 
+              videoUrl={getVideoUrl(data.user_video_url)} 
+              skeletonFrames={data.skeleton_frames || []}
+              fps={data.video_fps || 30}
+            />
+          </div>
         </div>
       </div>
 
@@ -95,39 +107,40 @@ export default function AnalysisPage() {
 
       {/* Joint Angles Data Table */}
       <div style={{ marginBottom: '3rem' }}>
-        <h2>Joint Angles (Telemetry)</h2>
+        <h2>Telemetry Data (Per Frame)</h2>
         {data.joint_angles && data.joint_angles.length > 0 ? (
-          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #444' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#222' }}>
-                <th style={{ border: '1px solid #444', padding: '8px' }}>Frame</th>
-                <th style={{ border: '1px solid #444', padding: '8px' }}>Joint</th>
-                <th style={{ border: '1px solid #444', padding: '8px' }}>Angle (Degrees)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.joint_angles.map((row: any, idx: number) => (
-                <tr key={idx}>
-                  <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.frame}</td>
-                  <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.joint_name}</td>
-                  <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.angle}</td>
+          <div style={{ maxHeight: '400px', overflowY: 'auto', marginTop: '1rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #444' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#222', position: 'sticky', top: 0 }}>
+                  <th style={{ border: '1px solid #444', padding: '8px' }}>Frame</th>
+                  <th style={{ border: '1px solid #444', padding: '8px' }}>Metric</th>
+                  <th style={{ border: '1px solid #444', padding: '8px' }}>Value</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.joint_angles.map((row: any, idx: number) => (
+                  <tr key={idx}>
+                    <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.frame}</td>
+                    <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.joint_name}</td>
+                    <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.angle}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <p>No joint angle data available.</p>
+          <p>No telemetry data available. Video may still be processing.</p>
         )}
       </div>
 
       {/* Raw JSON Dump */}
       <div>
-        <h2>Raw Telemetry JSON</h2>
-        <pre style={{ backgroundColor: '#000', padding: '1rem', overflowX: 'auto', border: '1px solid #333' }}>
+        <h2>Raw API Response</h2>
+        <pre style={{ backgroundColor: '#000', padding: '1rem', overflowX: 'auto', border: '1px solid #333', maxHeight: '300px', overflowY: 'auto' }}>
           {JSON.stringify(data, null, 2)}
         </pre>
       </div>
-
     </div>
   );
 }
