@@ -12,7 +12,10 @@ from app.api.auth import router as auth_router
 setup_logging()
 
 app = FastAPI(title=settings.PROJECT_NAME)
-app.mount("/storage", StaticFiles(directory="storage"), name="storage")
+
+# Mount the actual uploads directory from settings (storage/uploads/).
+# settings.UPLOADS_DIR auto-creates the folder via its computed_field.
+app.mount("/uploads", StaticFiles(directory=str(settings.UPLOADS_DIR)), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
