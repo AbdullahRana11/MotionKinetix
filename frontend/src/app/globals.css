@@ -2,19 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #0A0B10;
-  color: #F8FAFC;
-  font-family: system-ui, -apple-system, sans-serif;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-/* Global optimization for WebGL 3D canvas layers */
-canvas {
-  pointer-events: auto;
+@layer base {
+  body {
+    @apply bg-neutral-900 text-neutral-50 antialiased;
+  }
 }
