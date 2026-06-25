@@ -13,6 +13,8 @@
 MotionKinetix is a system that processes video footage through a YOLOv8 pose estimation pipeline, extracts COCO-format skeletal keypoints frame-by-frame, derives kinematic telemetry (joint angles, angular velocity), and renders an interactive skeleton overlay directly on the video in the browser using the Canvas API. Athletes and coaches upload a video, and the system returns a frame-accurate biomechanical breakdown with a DTW-based similarity score against a reference standard.
 
 ---
+## Developed By
+Muhammad Abdullah Rana
 
 ## Table of Contents
 
