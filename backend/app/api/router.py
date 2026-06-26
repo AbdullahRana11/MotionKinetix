@@ -119,22 +119,88 @@ async def compare_videos(user_video_id: str, pro_video_id: str, db: Session = De
 
 @router.get("/analysis/{video_id}")
 async def get_analysis(video_id: str, db: Session = Depends(get_db)):
-    """Full analysis endpoint returning video URLs, skeleton keypoints, and telemetry."""
+    """Full analysis endpoint — BACKEND_STRUCTURE.md §2 compliant.
+
+    Returns:
+        - analysis_id: UUID of the analysis result
+        - dtw_similarity_score: Clamped [0.0, 100.0]
+        - processed_video_url: Dynamic path to the real dual-video (NEVER mov_bbb.mp4)
+        - user_video_url: Path to the original uploaded video
+        - video_fps: Frames per second of the source video
+        - graph_data: [{axis_x_frame, axis_y_angle}, ...]
+        - skeleton_frames: Per-frame keypoint data for Canvas overlay
+        - joint_angles: Legacy table data for backward compatibility
+    """
+    from app.crud.analysis import get_analysis_by_video_id
+    from app.services.math_utils import clamp_dtw_score
+    import json
+
     db_video = get_video(db, video_id)
     if not db_video:
         raise HTTPException(status_code=404, detail="Video not found")
-    
-    # Find the actual file on disk (stored as {video_id}.{ext})
+
+    # ── Locate the actual uploaded file on disk ──────────────────────────────
     actual_file = None
     for ext in [".mp4", ".mov", ".avi"]:
         candidate = settings.UPLOADS_DIR / f"{video_id}{ext}"
         if candidate.exists():
             actual_file = f"{video_id}{ext}"
             break
-    
+
     user_video_path = f"/uploads/{actual_file}" if actual_file else ""
 
-    # Query all telemetry rows for this video, ordered by frame
+    # ── Get video FPS from the actual file ───────────────────────────────────
+    video_fps = 30.0
+    if actual_file:
+        import cv2
+        cap = cv2.VideoCapture(str(settings.UPLOADS_DIR / actual_file))
+        if cap.isOpened():
+            video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+            cap.release()
+
+    # ── Try to load from analysis_results table (Phase 2 pipeline output) ────
+    analysis = get_analysis_by_video_id(db, video_id)
+
+    if analysis:
+        # Real pipeline data exists — return it directly
+        graph_data = json.loads(analysis.graph_json) if analysis.graph_json else []
+        processed_video_url = f"http://localhost:8000{analysis.processed_video_path}"
+
+        # Build skeleton_frames from legacy telemetry if available
+        from app.models.telemetry import Telemetry
+        telemetry_rows = (
+            db.query(Telemetry)
+            .filter(Telemetry.video_id == video_id)
+            .order_by(Telemetry.frame_index.asc())
+            .all()
+        )
+
+        skeleton_frames = []
+        joint_angles = []
+        for row in telemetry_rows:
+            skeleton_frames.append({
+                "frame_index": row.frame_index,
+                "timestamp_ms": row.timestamp_ms,
+                "keypoints": row.raw_keypoints,
+            })
+            joint_angles.append({
+                "frame": row.frame_index,
+                "joint_name": "Angular Velocity",
+                "angle": round(row.angular_velocity, 2),
+            })
+
+        return {
+            "analysis_id": analysis.id,
+            "dtw_similarity_score": analysis.dtw_score,
+            "processed_video_url": processed_video_url,
+            "user_video_url": user_video_path,
+            "video_fps": video_fps,
+            "graph_data": graph_data,
+            "skeleton_frames": skeleton_frames,
+            "joint_angles": joint_angles,
+        }
+
+    # ── Fallback: Build response from legacy telemetry table ─────────────────
     from app.models.telemetry import Telemetry
     telemetry_rows = (
         db.query(Telemetry)
@@ -143,43 +209,46 @@ async def get_analysis(video_id: str, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Build skeleton_frames: list of { frame_index, timestamp_ms, keypoints: [{x,y,confidence,label}] }
     skeleton_frames = []
     joint_angles = []
+    graph_data = []
     for row in telemetry_rows:
         skeleton_frames.append({
             "frame_index": row.frame_index,
             "timestamp_ms": row.timestamp_ms,
-            "keypoints": row.raw_keypoints,  # Already stored as list of dicts
+            "keypoints": row.raw_keypoints,
         })
-        # Also build legacy joint_angles for the table view
         joint_angles.append({
             "frame": row.frame_index,
             "joint_name": "Angular Velocity",
             "angle": round(row.angular_velocity, 2),
         })
+        graph_data.append({
+            "axis_x_frame": row.frame_index,
+            "axis_y_angle": round(abs(row.angular_velocity), 2),
+        })
 
-    # Get video FPS from the actual file
-    video_fps = 30.0  # Default
-    if actual_file:
-        import cv2
-        cap = cv2.VideoCapture(str(settings.UPLOADS_DIR / actual_file))
-        if cap.isOpened():
-            video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-            cap.release()
-
-    # Calculate a DTW score if telemetry exists
+    # Heuristic DTW score with strict clamping
     dtw_score = 0.0
     if telemetry_rows:
         velocities = [r.angular_velocity for r in telemetry_rows]
-        avg = sum(velocities) / len(velocities) if velocities else 0
-        dtw_score = round(max(0, 100 - avg * 0.1), 1)  # Simple heuristic
+        avg = sum(abs(v) for v in velocities) / len(velocities) if velocities else 0
+        dtw_score = clamp_dtw_score(100.0 - avg * 0.1)
+
+    # Check for a processed dual-video file on disk
+    processed_path = settings.PROCESSED_CACHE_DIR / f"processed_{video_id}.mp4"
+    if processed_path.exists():
+        processed_video_url = f"http://localhost:8000/processed/processed_{video_id}.mp4"
+    else:
+        processed_video_url = user_video_path  # Fall back to original video
 
     return {
-        "reference_video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
+        "analysis_id": video_id,
+        "dtw_similarity_score": dtw_score,
+        "processed_video_url": processed_video_url,
         "user_video_url": user_video_path,
         "video_fps": video_fps,
-        "dtw_similarity_score": dtw_score,
+        "graph_data": graph_data,
         "skeleton_frames": skeleton_frames,
         "joint_angles": joint_angles,
     }
