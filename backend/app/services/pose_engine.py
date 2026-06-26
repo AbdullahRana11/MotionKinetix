@@ -16,6 +16,7 @@ from ultralytics import YOLO
 
 from app.schemas.kinematics import SkeletonFrame, Keypoint
 from app.services.physics_engine import KinematicEngine
+from app.services.math_utils import clamp_coordinate
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,10 @@ class PoseExtractionService:
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_interval_ms = 1000.0 / fps if fps > 0 else 33.33
 
+        # Get frame dimensions for coordinate normalization
+        frame_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        frame_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
         try:
             frame_index = 0
             while True:
@@ -70,10 +75,14 @@ class PoseExtractionService:
                         for i, kp in enumerate(person_kpts):
                             if i < len(KEYPOINT_LABELS):
                                 x, y, conf = kp.tolist()
+                                # ALGORITHM_GUIDELINES.md §2: Clamp all coordinates to [0.0, 1.0]
+                                # YOLO returns pixel coordinates — normalize then clamp
+                                norm_x = x / frame_width if frame_width > 0 else 0.0
+                                norm_y = y / frame_height if frame_height > 0 else 0.0
                                 keypoints_list.append(
                                     Keypoint(
-                                        x=float(x),
-                                        y=float(y),
+                                        x=clamp_coordinate(norm_x),
+                                        y=clamp_coordinate(norm_y),
                                         confidence=float(conf),
                                         label=KEYPOINT_LABELS[i]
                                     )
