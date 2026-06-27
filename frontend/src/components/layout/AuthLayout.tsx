@@ -8,11 +8,11 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <BackgroundLayer overlay="dark">
-      <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 py-16">
+    <BackgroundLayer background="auth" overlay="auth">
+      <main className="flex min-h-screen items-center justify-center px-4 py-16 sm:px-6 lg:justify-end lg:pr-[8vw] xl:pr-[12vw]">
         <div
           className="w-full max-w-md"
-          style={{ perspective: '1200px' }}
+          style={{ perspective: '1400px' }}
         >
           {children}
         </div>
