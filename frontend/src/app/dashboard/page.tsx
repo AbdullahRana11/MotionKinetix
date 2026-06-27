@@ -1,7 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
+import VideoGrid from '@/components/dashboard/VideoGrid';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { useAuthStore } from '@/store/useAuthStore';
 
 interface Video {
@@ -25,10 +30,12 @@ export default function DashboardPage() {
         return;
       }
 
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+
       try {
-        const res = await fetch('http://localhost:8000/api/v1/videos', {
+        const res = await fetch(`${apiUrl}/api/v1/videos`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -38,8 +45,8 @@ export default function DashboardPage() {
 
         const data = await res.json();
         setVideos(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch videos');
       } finally {
         setIsLoading(false);
       }
@@ -49,69 +56,45 @@ export default function DashboardPage() {
   }, [token]);
 
   if (isLoading) {
-    return <div className="p-8 text-white">Loading dashboard...</div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <LoadingState message="Loading dashboard..." />
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-8 text-red-500">Error: {error}</div>;
+    return (
+      <Card className="border-error/30">
+        <p className="text-sm text-error text-crisp">Error: {error}</p>
+      </Card>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-900 p-8 text-white">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Link 
-          href="/dashboard/upload" 
-          className="rounded bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-700"
-        >
-          Upload Video
+    <div>
+      <div className="glass-liquid mb-10 flex flex-col items-start justify-between gap-4 rounded-2xl p-6 md:flex-row md:items-center">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-widest text-white/50 text-crisp">
+            Mission Control
+          </p>
+          <h1 className="mt-1 text-3xl font-black tracking-wide text-hero-crisp">
+            Dashboard
+          </h1>
+        </div>
+        <Link href="/dashboard/upload">
+          <Button variant="glass">Upload Video</Button>
         </Link>
       </div>
 
       {videos.length === 0 ? (
-        <p className="text-neutral-400">No videos found. Upload one to get started.</p>
+        <Card>
+          <p className="text-white/60 text-crisp">
+            No videos found. Upload one to get started.
+          </p>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {videos.map((video) => {
-            const CardContent = (
-              <div className="flex h-full flex-col justify-between rounded-lg border border-neutral-700 bg-neutral-800 p-6 shadow-sm transition-colors hover:border-neutral-500">
-                <div>
-                  <h2 className="mb-2 truncate text-lg font-semibold" title={video.filename}>
-                    {video.filename}
-                  </h2>
-                  <p className="text-sm text-neutral-400">
-                    Uploaded: {new Date(video.upload_date).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="mt-4">
-                  <span
-                    className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                      video.status.toLowerCase() === 'completed'
-                        ? 'bg-green-900/50 text-green-400'
-                        : 'bg-yellow-900/50 text-yellow-400'
-                    }`}
-                  >
-                    {video.status}
-                  </span>
-                </div>
-              </div>
-            );
-
-            if (video.status.toLowerCase() === 'completed') {
-              return (
-                <Link key={video.id} href={`/analysis/${video.id}`} className="block h-full">
-                  {CardContent}
-                </Link>
-              );
-            }
-
-            return (
-              <div key={video.id} className="block h-full opacity-75">
-                {CardContent}
-              </div>
-            );
-          })}
-        </div>
+        <VideoGrid videos={videos} />
       )}
     </div>
   );
