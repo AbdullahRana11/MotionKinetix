@@ -4,6 +4,52 @@
 
 @layer base {
   body {
-    @apply bg-neutral-900 text-neutral-50 antialiased;
+    @apply min-h-screen bg-neutral-900 text-white antialiased;
+  }
+
+  ::selection {
+    @apply bg-primary-500/30 text-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-white/10 backdrop-blur-sm;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/20;
+  }
+}
+
+@layer components {
+  .bg-app-background {
+    background-image: url('/background.jpg');
+    @apply bg-cover bg-center bg-no-repeat bg-fixed;
+  }
+
+  .glass-liquid {
+    @apply border border-white/10 bg-white/5 shadow-liquid backdrop-blur-2xl;
+  }
+
+  .glass-spatial {
+    @apply border border-white/10 bg-black/40 shadow-spatial backdrop-blur-3xl;
+  }
+
+  .text-crisp {
+    @apply text-white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  }
+
+  .text-hero-crisp {
+    @apply text-white;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
   }
 }
