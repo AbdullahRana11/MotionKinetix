@@ -73,9 +73,9 @@ export default function AuthForm() {
     >
       <GlassPanel
         variant="spatial"
-        className="relative p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] before:pointer-events-none before:absolute before:inset-0 before:rounded-2xl before:border before:border-white/10 before:content-['']"
+        className="relative border-amber-500/10 bg-gradient-to-br from-black/50 via-black/40 to-amber-950/20 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] before:pointer-events-none before:absolute before:inset-0 before:rounded-2xl before:border before:border-white/10 before:content-['']"
       >
-        <div className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-b from-white/10 via-transparent to-transparent opacity-60" />
+        <div className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-br from-cyan-500/10 via-transparent to-amber-500/10 opacity-70" />
 
         <div className="relative mb-8 text-center">
           <p className="mb-2 text-xs font-medium uppercase tracking-widest text-white/50 text-crisp">
