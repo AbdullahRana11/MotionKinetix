@@ -1,27 +1,33 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
+import AboutSection from '@/components/landing/AboutSection';
 import GlassHero from '@/components/landing/GlassHero';
+import HistorySection from '@/components/landing/HistorySection';
+import LandingNav from '@/components/landing/LandingNav';
+import MetricsSection from '@/components/landing/MetricsSection';
+import PlatformSection from '@/components/landing/PlatformSection';
+import ScienceSection from '@/components/landing/ScienceSection';
 import BackgroundLayer from '@/components/layout/BackgroundLayer';
-import TopNav from '@/components/ui/TopNav';
 
 export default function Home() {
   return (
-    <BackgroundLayer>
-      <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6">
-        <TopNav />
-        <GlassHero />
+    <BackgroundLayer background="landing" overlay="landing">
+      <LandingNav />
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="absolute bottom-8 text-xs tracking-widest text-white/40 text-crisp"
-        >
-          APEX KINEMATICS — SPATIAL &amp; LIQUID GLASS UI
-        </motion.div>
+      <main className="relative mx-auto max-w-6xl px-4 pb-12 pt-28 sm:px-6 md:pt-32">
+        <GlassHero />
+        <AboutSection />
+        <PlatformSection />
+        <ScienceSection />
+        <HistorySection />
+        <MetricsSection />
       </main>
+
+      <footer className="border-t border-white/5 py-8 text-center">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-white/35 text-crisp">
+          Apex Kinematics — Enterprise Biomechanics Intelligence
+        </p>
+      </footer>
     </BackgroundLayer>
   );
 }
