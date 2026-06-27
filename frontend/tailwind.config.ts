@@ -35,9 +35,24 @@ const config: Config = {
         glow: "0 0 30px -5px rgba(0, 238, 252, 0.3)",
         "glow-success": "0 0 30px -5px rgba(0, 255, 128, 0.3)",
         glass: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+        liquid: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+        spatial: "0 20px 50px rgba(0, 0, 0, 0.5)",
+        "input-inner": "inset 0 2px 8px rgba(0, 0, 0, 0.45)",
+        "input-focus-glow":
+          "inset 0 2px 8px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 238, 252, 0.35), 0 0 24px rgba(0, 238, 252, 0.2)",
+      },
+      backdropBlur: {
+        "3xl": "64px",
       },
       letterSpacing: {
         hero: "0.2em",
+      },
+      textShadow: {
+        crisp: "0 1px 3px rgba(0, 0, 0, 0.85)",
+        hero: "0 2px 16px rgba(0, 0, 0, 0.9)",
+      },
+      backgroundImage: {
+        "app-background": "url('/background.jpg')",
       },
     },
   },
