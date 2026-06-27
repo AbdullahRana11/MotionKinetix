@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${spaceMono.variable} font-sans`}>
+      <body className={`${inter.variable} ${spaceMono.variable} min-h-screen font-sans`}>
         {children}
       </body>
     </html>
