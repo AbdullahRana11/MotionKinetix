@@ -1,22 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export default function UploadVideoPage() {
   const router = useRouter();
   const token = useAuthStore((state) => state.token);
-  
+
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-      setError(null);
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+
+    const validTypes = ['video/mp4', 'video/quicktime'];
+    if (!validTypes.includes(selected.type)) {
+      setError('Invalid format. MP4/MOV only.');
+      setFile(null);
+      return;
     }
+
+    setFile(selected);
+    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,17 +46,16 @@ export default function UploadVideoPage() {
     setIsUploading(true);
     setError(null);
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+
     try {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Using the exact endpoint provided. If backend uses v1 routing, this might need updating to /api/v1/videos/upload
-      const res = await fetch('http://localhost:8000/api/v1/videos/upload', {
+      const res = await fetch(`${apiUrl}/api/v1/videos/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          // Note: Do NOT set Content-Type header manually when using FormData.
-          // The browser will automatically set it to multipart/form-data with the correct boundary.
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -53,47 +65,64 @@ export default function UploadVideoPage() {
         throw new Error(errorData?.detail || 'Failed to upload video');
       }
 
-      // On success, redirect to dashboard
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : 'Upload interrupted. Check connection.',
+      );
     } finally {
       setIsUploading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0A0B10] p-4 text-white">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-md">
-        <h1 className="mb-6 text-2xl font-bold tracking-wider">Upload Video</h1>
-        
+    <div className="mx-auto max-w-lg">
+      <div className="mb-8">
+        <Link
+          href="/dashboard"
+          className="text-xs font-medium uppercase tracking-widest text-white/50 text-crisp transition-colors hover:text-white"
+        >
+          ← Back to Dashboard
+        </Link>
+      </div>
+
+      <Card>
+        <h1 className="mb-2 text-2xl font-black tracking-hero text-hero-crisp">
+          Upload Video
+        </h1>
+        <p className="mb-8 text-sm text-white/60 text-crisp">
+          Ingest raw athletic footage for biomechanics processing.
+        </p>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-neutral-400">
+            <label className="text-xs font-medium uppercase tracking-widest text-white/60 text-crisp">
               Select Video File
             </label>
             <input
               type="file"
-              accept="video/mp4, video/quicktime"
+              accept="video/mp4,video/quicktime"
               onChange={handleFileChange}
               disabled={isUploading}
-              className="file:mr-4 file:rounded-md file:border-0 file:bg-[#2E5BFF] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#2E5BFF]/80 disabled:opacity-50"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white shadow-input-inner backdrop-blur-sm file:mr-4 file:rounded-lg file:border-0 file:bg-primary-500/20 file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-widest file:text-primary-400 hover:file:bg-primary-500/30 disabled:opacity-50"
             />
           </div>
 
           {error && (
-            <p className="text-sm font-medium text-red-500">{error}</p>
+            <p className="text-sm font-medium text-error text-crisp" role="alert">
+              {error}
+            </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isUploading || !file}
-            className="mt-4 rounded-lg bg-[#2E5BFF] py-3 font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#2E5BFF]/80 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isUploading ? 'Uploading...' : 'Upload Video'}
-          </button>
+          {isUploading ? (
+            <LoadingState message="Uploading..." />
+          ) : (
+            <Button type="submit" disabled={!file} className="w-full">
+              Initialize Upload
+            </Button>
+          )}
         </form>
-      </div>
+      </Card>
     </div>
   );
 }
