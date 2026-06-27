@@ -1,16 +1,39 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '@/store/useAuthStore';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import SkeletalPlayer from '@/components/analysis/SkeletalPlayer';
+import { useEffect, useState } from 'react';
+
+import TelemetryTable from '@/components/analysis/TelemetryTable';
+import SkeletalPlayer, {
+  type SkeletonFrameData,
+} from '@/components/analysis/SkeletalPlayer';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { useAuthStore } from '@/store/useAuthStore';
+
+interface JointAngleRow {
+  frame: number;
+  joint_name: string;
+  angle: number;
+}
+
+interface AnalysisData {
+  reference_video_url: string;
+  user_video_url: string;
+  skeleton_frames: SkeletonFrameData[];
+  video_fps: number;
+  dtw_similarity_score?: number;
+  joint_angles?: JointAngleRow[];
+}
 
 export default function AnalysisPage() {
   const params = useParams();
   const id = params.id as string;
   const token = useAuthStore((state) => state.token);
 
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,7 +41,8 @@ export default function AnalysisPage() {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    return `http://localhost:8000/${cleanPath}`;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+    return `${apiUrl}/${cleanPath}`;
   };
 
   useEffect(() => {
@@ -30,21 +54,29 @@ export default function AnalysisPage() {
       }
       if (!id) return;
 
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/analysis/${id}`, {
+        const res = await fetch(`${apiUrl}/api/v1/analysis/${id}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
         if (!res.ok) {
+          if (res.status === 404) {
+            setError('Telemetry data corrupted or missing.');
+            return;
+          }
           throw new Error('Failed to fetch analysis data');
         }
 
         const json = await res.json();
         setData(json);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch analysis data',
+        );
       } finally {
         setIsLoading(false);
       }
@@ -54,93 +86,95 @@ export default function AnalysisPage() {
   }, [id, token]);
 
   if (isLoading) {
-    return <div style={{ color: 'white', padding: '2rem', backgroundColor: '#111', minHeight: '100vh' }}>Loading analysis data...</div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <LoadingState message="Loading analysis..." />
+      </div>
+    );
   }
 
   if (error) {
-    return <div style={{ color: 'red', padding: '2rem', backgroundColor: '#111', minHeight: '100vh' }}>Error: {error}</div>;
+    return (
+      <Card className="mx-auto max-w-lg text-center">
+        <p className="mb-6 text-sm text-error text-crisp">{error}</p>
+        <Link href="/dashboard">
+          <Button variant="glass">Return to Dashboard</Button>
+        </Link>
+      </Card>
+    );
   }
 
   if (!data) {
-    return <div style={{ color: 'white', padding: '2rem', backgroundColor: '#111', minHeight: '100vh' }}>No data found.</div>;
+    return (
+      <Card className="mx-auto max-w-lg text-center">
+        <p className="text-white/60 text-crisp">No data found.</p>
+      </Card>
+    );
   }
 
   return (
-    <div style={{ backgroundColor: '#111', color: 'white', minHeight: '100vh', padding: '2rem' }}>
-      <h1 style={{ marginBottom: '0.5rem' }}>Analysis: {id}</h1>
-      <p style={{ color: '#8e90a2', fontSize: '0.875rem', marginBottom: '2rem' }}>
-        {data.skeleton_frames?.length || 0} frames processed &bull; {data.video_fps || 30} FPS
-      </p>
+    <div className="space-y-8">
+      <div className="glass-liquid rounded-2xl p-6">
+        <p className="text-xs font-medium uppercase tracking-widest text-white/50 text-crisp">
+          Telemetry HUD
+        </p>
+        <h1 className="mt-1 text-3xl font-black tracking-wide text-hero-crisp">
+          Analysis: {id}
+        </h1>
+        <p className="mt-2 text-sm text-white/60 text-crisp">
+          {data.skeleton_frames?.length || 0} frames processed &bull;{' '}
+          {data.video_fps || 30} FPS
+        </p>
+      </div>
 
-      {/* Videos Section */}
-      <div style={{ display: 'flex', gap: '2rem', marginBottom: '3rem' }}>
-        <div style={{ flex: 1 }}>
-          <h2>Reference (Pro) Video</h2>
-          <video 
-            controls 
-            style={{ width: '100%', borderRadius: '8px', border: '1px solid #333', marginTop: '0.5rem' }}
-            src={getVideoUrl(data.reference_video_url)} 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card title="Reference (Pro) Video">
+          <video
+            controls
+            className="mt-4 w-full overflow-hidden rounded-xl border border-white/10"
+            src={getVideoUrl(data.reference_video_url)}
           >
             Your browser does not support the video tag.
           </video>
-        </div>
-        
-        <div style={{ flex: 1 }}>
-          <h2>User Video — Skeleton Overlay</h2>
-          <div style={{ marginTop: '0.5rem' }}>
-            <SkeletalPlayer 
-              videoUrl={getVideoUrl(data.user_video_url)} 
+        </Card>
+
+        <Card title="User Video — Skeleton Overlay">
+          <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
+            <SkeletalPlayer
+              videoUrl={getVideoUrl(data.user_video_url)}
               skeletonFrames={data.skeleton_frames || []}
               fps={data.video_fps || 30}
             />
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* DTW Score */}
-      <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
-        <h2>DTW Similarity Score</h2>
-        <div style={{ fontSize: '6rem', fontWeight: 'bold', color: '#00eefc' }}>
-          {data.dtw_similarity_score !== undefined ? data.dtw_similarity_score : 'N/A'}
+      <Card className="text-center">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-white/50 text-crisp">
+          DTW Similarity Score
+        </h2>
+        <div className="mt-4 font-black tracking-hero text-primary-500 text-hero-crisp text-6xl md:text-8xl">
+          {data.dtw_similarity_score !== undefined
+            ? data.dtw_similarity_score
+            : 'N/A'}
         </div>
-      </div>
+      </Card>
 
-      {/* Joint Angles Data Table */}
-      <div style={{ marginBottom: '3rem' }}>
-        <h2>Telemetry Data (Per Frame)</h2>
+      <Card title="Telemetry Data (Per Frame)">
         {data.joint_angles && data.joint_angles.length > 0 ? (
-          <div style={{ maxHeight: '400px', overflowY: 'auto', marginTop: '1rem' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #444' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#222', position: 'sticky', top: 0 }}>
-                  <th style={{ border: '1px solid #444', padding: '8px' }}>Frame</th>
-                  <th style={{ border: '1px solid #444', padding: '8px' }}>Metric</th>
-                  <th style={{ border: '1px solid #444', padding: '8px' }}>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.joint_angles.map((row: any, idx: number) => (
-                  <tr key={idx}>
-                    <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.frame}</td>
-                    <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.joint_name}</td>
-                    <td style={{ border: '1px solid #444', padding: '8px', textAlign: 'center' }}>{row.angle}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <TelemetryTable rows={data.joint_angles} />
         ) : (
-          <p>No telemetry data available. Video may still be processing.</p>
+          <p className="mt-4 text-white/60 text-crisp">
+            No telemetry data available. Video may still be processing.
+          </p>
         )}
-      </div>
+      </Card>
 
-      {/* Raw JSON Dump */}
-      <div>
-        <h2>Raw API Response</h2>
-        <pre style={{ backgroundColor: '#000', padding: '1rem', overflowX: 'auto', border: '1px solid #333', maxHeight: '300px', overflowY: 'auto' }}>
+      <Card title="Raw API Response">
+        <pre className="mt-4 max-h-[300px] overflow-auto rounded-xl border border-white/10 bg-black/30 p-4 font-mono text-xs text-white/70 backdrop-blur-sm">
           {JSON.stringify(data, null, 2)}
         </pre>
-      </div>
+      </Card>
     </div>
   );
 }
