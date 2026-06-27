@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply min-h-screen bg-neutral-900 text-white antialiased;
   }
@@ -41,6 +45,10 @@
 
   .glass-spatial {
     @apply border border-white/10 bg-black/40 shadow-spatial backdrop-blur-3xl;
+  }
+
+  .glass-landing {
+    @apply border border-cyan-500/15 bg-black/25 shadow-liquid backdrop-blur-2xl;
   }
 
   .text-crisp {
