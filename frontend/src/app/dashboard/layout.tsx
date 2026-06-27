@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <BackgroundLayer overlay="dark">
+    <BackgroundLayer background="lab" overlay="lab">
       <TopNav />
       <div className="relative mx-auto min-h-screen max-w-7xl px-4 pb-16 pt-28 md:px-8">
         {children}
