@@ -1,18 +1,38 @@
 import type { Metadata } from 'next';
-import { Inter, Space_Mono } from 'next/font/google';
+import {
+  Barlow_Condensed,
+  Cormorant_Garamond,
+  DM_Sans,
+  IBM_Plex_Mono,
+} from 'next/font/google';
 
 import './globals.css';
 
-const inter = Inter({
+const barlowCondensed = Barlow_Condensed({
   subsets: ['latin'],
-  variable: '--font-inter',
+  weight: ['600', '700', '800'],
+  variable: '--font-display',
   display: 'swap',
 });
 
-const spaceMono = Space_Mono({
+const cormorantGaramond = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-space-mono',
+  weight: ['500', '600', '700'],
+  variable: '--font-elegant',
+  display: 'swap',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-body',
+  display: 'swap',
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
   display: 'swap',
 });
 
@@ -29,7 +49,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${spaceMono.variable} min-h-screen font-sans`}>
+      <body
+        className={`${barlowCondensed.variable} ${cormorantGaramond.variable} ${dmSans.variable} ${ibmPlexMono.variable} min-h-screen font-sans antialiased`}
+      >
         {children}
       </body>
     </html>
