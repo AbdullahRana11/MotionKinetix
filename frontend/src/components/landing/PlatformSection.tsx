@@ -3,43 +3,33 @@
 import { motion } from 'framer-motion';
 
 import { platformFeatures } from '@/constants/landing-content';
-import { Card } from '@/components/ui/Card';
+import SectionHeading from '@/components/landing/SectionHeading';
 
 export default function PlatformSection() {
   return (
-    <section id="platform" className="scroll-mt-28 py-20">
-      <div className="mb-10 text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.3em] text-primary-400/90 text-crisp">
-          The Platform
-        </p>
-        <h2 className="mt-3 text-3xl font-black tracking-hero text-hero-crisp md:text-4xl">
-          THREE PILLARS OF PERFORMANCE
-        </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm text-white/60 text-crisp">
-          Upload footage, receive skeletal telemetry, and compare against elite
-          reference movement — all from a single cinematic workspace.
-        </p>
-      </div>
+    <section id="platform" className="scroll-mt-28 py-24">
+      <SectionHeading
+        eyebrow="The Platform"
+        title="Three Pillars of Performance"
+        description="Upload footage, receive skeletal telemetry, and compare against elite reference movement — all from a single cinematic workspace."
+      />
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-3">
         {platformFeatures.map((feature, index) => (
-          <motion.div
+          <motion.article
             key={feature.title}
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ delay: index * 0.12, duration: 0.6 }}
+            transition={{ delay: index * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="landing-card group"
           >
-            <Card className="relative h-full overflow-hidden border-cyan-500/10 bg-gradient-to-br from-white/[0.07] to-cyan-500/[0.03]">
-              <div className="absolute right-4 top-4 font-mono text-xs font-bold text-primary-500/80">
-                {feature.metric}
-              </div>
-              <h3 className="pr-16 text-lg font-bold text-crisp">{feature.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-white/65 text-crisp">
-                {feature.description}
-              </p>
-            </Card>
-          </motion.div>
+            <span className="font-mono text-[11px] font-medium tabular-nums text-ice-muted transition-colors duration-elite group-hover:text-ice">
+              {feature.metric}
+            </span>
+            <h3 className="landing-card-title mt-4">{feature.title}</h3>
+            <p className="landing-body mt-3 text-[14px]">{feature.description}</p>
+          </motion.article>
         ))}
       </div>
     </section>
