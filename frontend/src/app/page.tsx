@@ -23,8 +23,8 @@ export default function Home() {
         <MetricsSection />
       </main>
 
-      <footer className="border-t border-white/5 py-8 text-center">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-white/35 text-crisp">
+      <footer className="border-t border-white/[0.06] py-10 text-center">
+        <p className="font-sans text-[11px] uppercase text-zinc-600" style={{ letterSpacing: '0.18em' }}>
           Apex Kinematics — Enterprise Biomechanics Intelligence
         </p>
       </footer>
