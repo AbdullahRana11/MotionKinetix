@@ -3,38 +3,29 @@
 import { motion } from 'framer-motion';
 
 import { sciencePillars } from '@/constants/landing-content';
-import { Card } from '@/components/ui/Card';
+import SectionHeading from '@/components/landing/SectionHeading';
 
 export default function ScienceSection() {
   return (
-    <section id="science" className="scroll-mt-28 py-20">
-      <div className="mb-10 text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.3em] text-primary-400/90 text-crisp">
-          Biomechanics Science
-        </p>
-        <h2 className="mt-3 text-3xl font-black tracking-hero text-hero-crisp md:text-4xl">
-          THE PHYSICS BEHIND THE HUD
-        </h2>
-      </div>
+    <section id="science" className="scroll-mt-28 py-24">
+      <SectionHeading
+        eyebrow="Biomechanics Science"
+        title="The Physics Behind the HUD"
+      />
 
       <div className="space-y-4">
         {sciencePillars.map((pillar, index) => (
-          <motion.div
+          <motion.article
             key={pillar.title}
-            initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="landing-card flex flex-col gap-4 border-l border-l-ice/25 md:flex-row md:items-center md:gap-10"
           >
-            <Card className="border-l-2 border-l-primary-500/50 bg-black/25 md:flex md:items-center md:gap-8">
-              <h3 className="shrink-0 text-base font-bold uppercase tracking-widest text-primary-400 text-crisp md:w-48">
-                {pillar.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/70 text-crisp md:mt-0">
-                {pillar.body}
-              </p>
-            </Card>
-          </motion.div>
+            <h3 className="landing-card-title shrink-0 md:w-52">{pillar.title}</h3>
+            <p className="landing-body text-[14px]">{pillar.body}</p>
+          </motion.article>
         ))}
       </div>
     </section>
