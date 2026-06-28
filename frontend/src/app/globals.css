@@ -8,11 +8,11 @@
   }
 
   body {
-    @apply min-h-screen bg-neutral-900 text-white antialiased;
+    @apply min-h-screen bg-neutral-900 text-zinc-100 antialiased;
   }
 
   ::selection {
-    @apply bg-primary-500/30 text-white;
+    @apply bg-ice/20 text-white;
   }
 
   ::-webkit-scrollbar {
@@ -48,7 +48,7 @@
   }
 
   .glass-landing {
-    @apply border border-cyan-500/15 bg-black/25 shadow-liquid backdrop-blur-2xl;
+    @apply border border-white/[0.1] bg-zinc-950/20 shadow-elite backdrop-blur-xl;
   }
 
   .text-crisp {
@@ -59,5 +59,135 @@
   .text-hero-crisp {
     @apply text-white;
     text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
+  }
+
+  /* ── Landing typography ── */
+  .landing-eyebrow {
+    @apply font-sans text-[11px] font-medium uppercase text-ice/75;
+    letter-spacing: 0.14em;
+  }
+
+  .landing-hero-title {
+    font-family: var(--font-elegant), 'Times New Roman', Times, serif;
+    @apply text-5xl font-semibold uppercase leading-[0.95] md:text-7xl lg:text-[5.25rem];
+    letter-spacing: 0.04em;
+    color: #f4f4f5;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .landing-hero-title em,
+  .landing-hero-title span {
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .landing-section-title {
+    @apply font-display text-3xl font-bold uppercase leading-none tracking-tight text-zinc-100 md:text-4xl;
+  }
+
+  .landing-body {
+    @apply font-sans text-[15px] font-normal leading-[1.7] text-zinc-400 md:text-base;
+  }
+
+  .landing-card-title {
+    @apply font-display text-lg font-semibold uppercase tracking-display text-zinc-100;
+  }
+
+  .landing-metric {
+    @apply font-mono text-2xl font-medium tabular-nums text-ice-bright;
+  }
+
+  /* ── Landing navigation ── */
+  .nav-link-elite {
+    @apply relative font-sans text-[11px] font-medium uppercase text-zinc-500 transition-all duration-300 ease-out;
+    letter-spacing: 0.12em;
+  }
+
+  .nav-link-elite::after {
+    content: '';
+    @apply absolute -bottom-1 left-1/2 h-px w-0 -translate-x-1/2 bg-white/50 transition-all duration-300 ease-out;
+  }
+
+  .nav-link-elite:hover {
+    @apply text-zinc-100;
+    letter-spacing: 0.14em;
+  }
+
+  .nav-link-elite:hover::after {
+    @apply w-full;
+  }
+
+  .nav-link-elite-accent {
+    @apply rounded-sm border border-white/15 text-ice/90 transition-all duration-300 ease-out;
+  }
+
+  .nav-link-elite-accent:hover {
+    @apply border-white/35 bg-white/[0.06] text-ice-bright;
+    box-shadow: 0 0 20px rgba(168, 200, 220, 0.12);
+  }
+
+  .nav-link-elite-accent::after {
+    display: none;
+  }
+
+  /* ── Landing buttons ── */
+  .btn-elite-primary {
+    @apply relative font-display inline-flex items-center justify-center overflow-hidden rounded-sm border border-ice/25 bg-zinc-950/40 px-9 py-3.5 text-[13px] font-semibold uppercase tracking-display text-zinc-100 backdrop-blur-md transition-all duration-300 ease-out;
+  }
+
+  .btn-elite-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0.55s ease;
+  }
+
+  .btn-elite-primary:hover {
+    border-color: rgba(168, 200, 220, 0.55);
+    background-color: rgba(9, 9, 11, 0.65);
+    box-shadow: 0 0 32px -8px rgba(168, 200, 220, 0.35), 0 4px 16px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .btn-elite-primary:hover::before {
+    transform: translateX(100%);
+  }
+
+  .btn-elite-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-elite-secondary {
+    @apply relative font-display inline-flex items-center justify-center overflow-hidden rounded-sm border border-zinc-600/40 bg-transparent px-9 py-3.5 text-[13px] font-semibold uppercase tracking-display text-zinc-400 backdrop-blur-sm transition-all duration-300 ease-out;
+  }
+
+  .btn-elite-secondary:hover {
+    @apply border-zinc-400/50 bg-white/[0.04] text-zinc-100;
+    box-shadow: 0 0 24px -10px rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .btn-elite-secondary:active {
+    transform: translateY(0);
+  }
+
+  /* ── Landing surfaces ── */
+  .landing-panel {
+    @apply relative overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-950/15 shadow-elite backdrop-blur-md;
+  }
+
+  .landing-panel::before {
+    content: '';
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px bg-nav-border opacity-60;
+  }
+
+  .landing-card {
+    @apply landing-panel p-6 transition-[border-color,box-shadow,transform] duration-elite ease-elite;
+  }
+
+  .landing-card:hover {
+    @apply -translate-y-px border-white/[0.12] shadow-elite-hover;
   }
 }
