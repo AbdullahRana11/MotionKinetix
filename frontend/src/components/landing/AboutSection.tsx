@@ -1,41 +1,33 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 
 import { aboutBlocks } from '@/constants/landing-content';
-import { Card } from '@/components/ui/Card';
+import SectionHeading from '@/components/landing/SectionHeading';
 
 export default function AboutSection() {
   return (
-    <section id="about" className="scroll-mt-28 py-20">
-      <div className="mb-10 text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.3em] text-primary-400/90 text-crisp">
-          About Apex Kinematics
-        </p>
-        <h2 className="mt-3 text-3xl font-black tracking-hero text-hero-crisp md:text-4xl">
-          ELITE SPORTS SCIENCE, REDEFINED
-        </h2>
-      </div>
+    <section id="about" className="scroll-mt-28 py-24">
+      <SectionHeading
+        eyebrow="About Apex Kinematics"
+        title="Elite Sports Science, Redefined"
+      />
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-3">
         {aboutBlocks.map((block, index) => (
-          <motion.div
+          <motion.article
             key={block.heading}
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ delay: index * 0.1, duration: 0.6 }}
+            transition={{ delay: index * 0.08, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="landing-card"
           >
-            <Card className="h-full border-primary-500/10 bg-black/20">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-primary-400 text-crisp">
-                {block.heading}
-              </h3>
-              <p className="mt-4 text-sm leading-relaxed text-white/70 text-crisp">
-                {block.text}
-              </p>
-            </Card>
-          </motion.div>
+            <h3 className="landing-eyebrow text-ice/80">{block.heading}</h3>
+            <p className="landing-body mt-5 text-[14px] leading-[1.75]">
+              {block.text}
+            </p>
+          </motion.article>
         ))}
       </div>
     </section>
